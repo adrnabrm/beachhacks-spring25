@@ -55,19 +55,19 @@ def generate_recipe(ingredients: List[str]):
     memory_db["recipes"].append(generate_recipe[0])
     return {"recipes": generate_recipe[0]}
 
-model = None
+# model = None
 
-def load_model(): #load the AI trained model
-    global model
-    try:
-        model = torch.load("model.pth") #correct this path for the trained model
-        model.eval()
-        print("Model loaded")
+# def load_model(): #load the AI trained model
+#     global model
+#     try:
+#         model = torch.load("model.pth") #correct this path for the trained model
+#         model.eval()
+#         print("Model loaded")
 
-    except Exception as e:
-        print(f"Error loading model: {e}")
-        model = None
+#     except Exception as e:
+#         print(f"Error loading model: {e}")
+#         model = None
 
-@app.on_event("startup") #starts the model when FastAPI is loaded
-def startup_event():
-    load_model()
+# @app.on_event("startup") #starts the model when FastAPI is loaded
+# def startup_event():
+#     load_model()
