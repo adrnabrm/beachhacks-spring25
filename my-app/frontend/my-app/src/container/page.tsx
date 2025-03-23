@@ -37,7 +37,7 @@ export default function Page() {
       {/* Allergy checkboxes */}
         <div className="mt-4">
           <h2 className="text-lg font-bold">Do you have any food allergies?</h2>
-          <div className="flex flex-row items-start mt-2 space-y-2">
+          <div className="flex flex-row items-start mt-2 space-y">
             {["Peanuts", "Dairy", "Gluten", "Soy", "Seafood"].map((allergy) => (
             <label key={allergy} className="flex flex-row-reverse item-center justify-between space-x-4 gap-2">
               <input
