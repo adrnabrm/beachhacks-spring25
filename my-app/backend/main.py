@@ -4,6 +4,7 @@ from typing import List
 from pydantic import BaseModel
 import torch  # PyTorch for AI model
 import random  # For example-based recipe generation
+import uvicorn
 
 app = FastAPI()
 
@@ -28,52 +29,35 @@ app.add_middleware(
 )
 
 memory_db = {"recipes": {}}
+
+#model = torch.jit.load("model.pth") #replace with trained model
+#model.eval()
 # Root endpoint
 @app.get("/")
 def home():
     return {"message": "AI Recipe Generator is running!"}
 
 # Endpoint to fetch all stored recipes
-@app.get("/recipes")
+@app.get("/recipes", response_model=Recipe)
 def get_recipes():
-    return {"recipes": memory_db["recipes"]}
+    return {"recipes": list(memory_db["recipes"].values())}
 
-# Load AI model on startup
-model = None
-
-@app.on_event("startup")
-def load_model():
-    global model
-    try:
-        model = torch.load("model.pth", map_location=torch.device("cpu"))  # Load trained AI model
-        model.eval()  # Set model to evaluation mode
-        print("Model loaded successfully!")
-    except Exception as e:
-        print(f"Error loading model: {e}")
-
-# Endpoint to generate a recipe based on ingredients
-@app.post("/generate")
+@app.post("/recipe", response_model=Recipe)
 def generate_recipe(ingredients: List[str]):
-    if model is None:
+    if not model:
         raise HTTPException(status_code=500, detail="AI model not loaded")
+    input_tensor = torch.tensor([hash(i) % 1000 for i in ingredients]).float().unsqueeze(0)
 
-    # Simulating AI model inference (Replace with real AI model logic)
-    dummy_recipes = [
-        {
-            "name": "Spaghetti",
-            "ingredients": ["Pasta", "Sausage", "Tomato sauce"],
-            "instructions": "Boil the pasta, cook the sausage, and combine with tomato sauce."
-        },
-        {
-            "name": "Grilled Chicken",
-            "ingredients": ["Chicken", "Garlic", "Lemon"],
-            "instructions": "Marinate the chicken, grill it, and serve with lemon."
-        }
-    ]
-
-    generated_recipe = random.choice(dummy_recipes)  # Simulate model prediction
-    memory_db["recipes"].append(generated_recipe)  # Store recipe in memory
-    return {"recipe": generated_recipe}
+    with torch.no_grad():
+        output = model(input_tensor)
+    
+    generate_recipe={
+        "name": "AI Generated Meal",
+        "ingredients": ingredients,
+        "instructions": output.item()
+    }
+    memory_db["recipe"][generate_recipe["name"]] = generate_recipe
+    return generate_recipe
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="127.0.0.1", port=8000)
