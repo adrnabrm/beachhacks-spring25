@@ -31,11 +31,13 @@ export default function Page() {
     }, {} as Record<string, string>)
   );
 
+
   const [activeFields, setActiveFields] = useState<Field[]>([]);
   const [allergies, setAllergies] = useState<string[]>([]);
   const [dietPlan, setDietPlan] = useState<string>(""); // State to hold the diet plan
   const [email, setEmail] = useState(""); // State to hold the email
-  const[loading,setLoading] = useState(false) //state for loading
+  const [loading, setLoading] = useState(false); // State for loading
+
 
   // Function to add dynamic fields
   const handleAddFields = (key: keyof typeof fieldsInsight) => {
@@ -107,21 +109,13 @@ export default function Page() {
     <main className="min-h-screen bg-gradient-to-b from-orange-50 to-orange-100">
       {/* Header */}
       <div className="bg-orange-500 h-auto w-full fixed top-0 z-50 p-5">
-      <h1 className="text-4xl font-extrabold text-gray-900 tracking-wide uppercase mx-auto text-center">
-        <span className="hidden sm:inline">👨‍⚕️</span> {/* Hide on mobile */}
-        AI Dietary Planner
-        <span className="inline sm:inline">👨‍⚕️</span> {/* Show only on mobile */}
-      </h1>
-      </div>
-
-      <div className="container mx-auto text-center mt-20 p-5">
-        <div className="bg-orange-200 rounded-lg shadow-md max-w-xl mx-auto p-3 font-bold">
-          <p>Are you aiming for a healthier lifestyle? Do you want a personalized nutrition plan without having to do specific research? Enter in your information and get nutritional advice without any hassle!</p>
-        </div>
+        <h1 className="text-6xl font-extrabold text-gray-900 tracking-wide uppercase mx-auto text-center">
+          👨‍⚕️ Diet Plan Generator 👨‍⚕️
+        </h1>
       </div>
 
       {/* Form Container */}
-      <div className="container mx-auto text-center pt-15">
+      <div className="container mx-auto text-center pt-32">
         <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-6 max-w-xl mx-auto">
           {/* Static Personal Info */}
           {fieldsPersonalInfo.map((field) => (
