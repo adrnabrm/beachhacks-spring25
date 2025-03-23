@@ -1,0 +1,3 @@
+node_modules/
+my-app/frontend/my-app/node_modules/.cache/
+my-app/backend/__pycache__/
