@@ -2,13 +2,17 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List
 from pydantic import BaseModel
-import torch  # PyTorch for AI model
-import random  # For example-based recipe generation
+import uvicorn
+import logging
 
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
+
+# Initialize FastAPI app
 app = FastAPI()
 
 # In-memory database for storing generated recipes
-memory_db = {"recipes": []}  
+memory_db = {"recipes": {}}
 
 # Pydantic model for recipe validation
 class Recipe(BaseModel):
@@ -16,8 +20,12 @@ class Recipe(BaseModel):
     ingredients: List[str]
     instructions: str
 
+# Pydantic model for receiving ingredient list
+class RecipeRequest(BaseModel):
+    ingredients: List[str]
+
 # Allow frontend to connect to the backend
-origins = ["http://localhost:3000"]  # Adjust to your React app's actual URL
+origins = ["http://localhost:3000"]  # Adjust to your frontend URL
 
 app.add_middleware(
     CORSMiddleware,
@@ -27,53 +35,40 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-memory_db = {"recipes": {}}
 # Root endpoint
 @app.get("/")
 def home():
     return {"message": "AI Recipe Generator is running!"}
 
 # Endpoint to fetch all stored recipes
-@app.get("/recipes")
+@app.get("/recipes", response_model=List[Recipe])
 def get_recipes():
-    return {"recipes": memory_db["recipes"]}
+    return list(memory_db["recipes"].values())
 
-# Load AI model on startup
-model = None
+# Endpoint to generate a recipe
+@app.post("/recipe", response_model=Recipe)
+def generate_recipe(request: RecipeRequest):
+    ingredients = request.ingredients  # Extract ingredients from the request
 
-@app.on_event("startup")
-def load_model():
-    global model
-    try:
-        model = torch.load("model.pth", map_location=torch.device("cpu"))  # Load trained AI model
-        model.eval()  # Set model to evaluation mode
-        print("Model loaded successfully!")
-    except Exception as e:
-        print(f"Error loading model: {e}")
+    # Hardcoded response since AI model is not used
+    output = "Step 1: Mix ingredients. Step 2: Cook for 20 minutes."
 
-# Endpoint to generate a recipe based on ingredients
-@app.post("/generate")
-def generate_recipe(ingredients: List[str]):
-    if model is None:
-        raise HTTPException(status_code=500, detail="AI model not loaded")
+    # Create a Recipe instance using the Pydantic model
+    recipe = Recipe(
+        name="AI Generated Meal",
+        ingredients=ingredients,
+        instructions=output
+    )
 
-    # Simulating AI model inference (Replace with real AI model logic)
-    dummy_recipes = [
-        {
-            "name": "Spaghetti",
-            "ingredients": ["Pasta", "Sausage", "Tomato sauce"],
-            "instructions": "Boil the pasta, cook the sausage, and combine with tomato sauce."
-        },
-        {
-            "name": "Grilled Chicken",
-            "ingredients": ["Chicken", "Garlic", "Lemon"],
-            "instructions": "Marinate the chicken, grill it, and serve with lemon."
-        }
-    ]
+    # Store the recipe in the in-memory database
+    memory_db["recipes"][recipe.name] = recipe
 
-    generated_recipe = random.choice(dummy_recipes)  # Simulate model prediction
-    memory_db["recipes"].append(generated_recipe)  # Store recipe in memory
-    return {"recipe": generated_recipe}
+    # Log the generated recipe for debugging
+    logging.debug(f"Generated recipe: {recipe}")
 
+    # Return the recipe (automatically serialized to JSON by FastAPI)
+    return recipe
+
+# Run the FastAPI app
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="127.0.0.1", port=8001)
