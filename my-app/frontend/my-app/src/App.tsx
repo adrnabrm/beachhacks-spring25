@@ -2,7 +2,7 @@
 import * as React from 'react';
 import './App.css'; // or './index.css' if that’s where you included Tailwind directives
 
-import Page from './container/Page';
+import Page from './container/page';
 
 export default function App() {
   return (
