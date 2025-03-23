@@ -14,7 +14,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-openai.api_key = os.getenv("OpenAI_API_KEY")  # Ensure you set this in your environment
+openai.api_key = os.getenv("OpenAI_API_KEY")
 
 class PatientData(BaseModel):
     age: int
