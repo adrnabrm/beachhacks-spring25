@@ -1,23 +1,19 @@
-"use client";
+import axios from "axios"; // Import Axios
 import { useState } from "react";
-import "./page.css";
-import * as React from "react";
 
-// Static personal info
+// Static personal info fields (same as before)
 const fieldsPersonalInfo = [
   { name: "age", label: "Age", type: "number" },
-  { name: "weight", label: "Weight (kg)", type: "number" },
-  { name: "height", label: "Height (cm)", type: "number" },
+  { name: "weight", label: "Weight (lbs)", type: "number" },
+  { name: "height", label: "Height (in/ft)", type: "number" },
 ];
 
-// Allergies list
-const allergyOptions = ["Peanuts", "Dairy", "Gluten", "Seafood"];
-
-// Dynamic fields by category
+// Dynamic fields for goal, medical condition, and dietary preference
 const fieldsInsight = {
   goal: [{ name: "goal", label: "Your Goal", type: "text" }],
   medical: [{ name: "medicalCondition", label: "Medical Condition", type: "text" }],
   dietary: [{ name: "dietaryPreference", label: "Dietary Preference", type: "text" }],
+  gender: [{name: "gender", label: "Gender Identity", type: "text"}]
 };
 
 type Field = {
@@ -27,7 +23,7 @@ type Field = {
 };
 
 export default function Page() {
-  // Tracks personal info + dynamic input values
+  // State for tracking form data
   const [formData, setFormData] = useState(
     fieldsPersonalInfo.reduce((acc, field) => {
       acc[field.name] = "";
@@ -35,19 +31,15 @@ export default function Page() {
     }, {} as Record<string, string>)
   );
 
-  // Tracks active dynamic input fields
   const [activeFields, setActiveFields] = useState<Field[]>([]);
-
-  // Tracks static ingredient and allergy inputs
   const [ingredients, setIngredients] = useState("");
   const [allergies, setAllergies] = useState<string[]>([]);
+  const [dietPlan, setDietPlan] = useState<string>(""); // State to hold the diet plan
 
-  // Add new field group (goal, medical, dietary)
   const handleAddFields = (key: keyof typeof fieldsInsight) => {
     const newFields = fieldsInsight[key].filter(
       (field) => !activeFields.some((f) => f.name === field.name)
     );
-    // Add to both formData and activeFields
     const updatedFormData = { ...formData };
     newFields.forEach((field) => {
       if (!(field.name in updatedFormData)) {
@@ -58,13 +50,11 @@ export default function Page() {
     setActiveFields([...activeFields, ...newFields]);
   };
 
-  // Input change handler
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Allergy checkbox handler
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value, checked } = e.target;
     setAllergies((prev) =>
@@ -72,30 +62,42 @@ export default function Page() {
     );
   };
 
-  // Form submit handler
-  const handleSubmit = (e: React.FormEvent) => {
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const submission = {
-      ...formData,
-      ingredients,
-      allergies,
+    console.log("Clicked");
+    
+    const patientData = {
+      age: formData.age,
+      height: formData.height,
+      weight: formData.weight,
+      gender: formData.gender || "", // Assuming you don't have a gender input for now
+      goals: formData.goal || "",
+      medical_condition: formData.medicalCondition || "",
+      dietary: formData.dietaryPreference || "",
     };
-    console.log("Submitted:", submission);
+
+    try {
+      // Make POST request to FastAPI endpoint
+      const response = await axios.post("http://localhost:8000/generate/", patientData);
+
+      // Log the response from the backend (diet plan) and update the state
+      setDietPlan(response.data.diet_plan);
+    } catch (error) {
+      console.error("Error submitting form:", error);
+    }
   };
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-orange-50 to-orange-100">
-      <div className="bg-orange-500 h-auto w-full fixed top-0 z-50">
+      <div className="bg-orange-500 h-auto w-full fixed top-0 z-50 p-5">
         <h1 className="text-6xl font-extrabold text-gray-900 tracking-wide uppercase mx-auto text-center">
-          title
+        👨‍⚕️ Diet Plan Generator 👨‍⚕️
         </h1>
       </div>
 
       <div className="container mx-auto text-center pt-32">
-        <form
-          onSubmit={handleSubmit}
-          className="bg-white rounded-lg shadow-md p-6 max-w-xl mx-auto"
-        >
+        <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-6 max-w-xl mx-auto">
           {/* Static Personal Info */}
           {fieldsPersonalInfo.map((field) => (
             <div key={field.name} className="mb-4 text-left">
@@ -109,34 +111,6 @@ export default function Page() {
               />
             </div>
           ))}
-
-          {/* Ingredients */}
-          <div className="mb-4 text-left">
-            <label className="block mb-1">Ingredients:</label>
-            <input
-              type="text"
-              value={ingredients}
-              onChange={(e) => setIngredients(e.target.value)}
-              className="w-full border px-3 py-2 rounded"
-            />
-          </div>
-
-          {/* Allergies */}
-          <div className="mb-4 text-left">
-            <p className="mb-1">Allergies:</p>
-            {allergyOptions.map((item) => (
-              <label key={item} className="inline-flex items-center mr-4">
-                <input
-                  type="checkbox"
-                  value={item}
-                  checked={allergies.includes(item)}
-                  onChange={handleCheckboxChange}
-                  className="mr-1"
-                />
-                {item}
-              </label>
-            ))}
-          </div>
 
           {/* Dynamic Input Fields */}
           {activeFields.map((field) => (
@@ -175,15 +149,30 @@ export default function Page() {
             >
               Add Dietary Preference
             </button>
+            <button
+              type="button"
+              onClick={() => handleAddFields("gender")}
+              className="bg-red-500 text-white px-4 py-2 rounded"
+            >
+              Add Gender
+            </button>
           </div>
 
           <button
             type="submit"
             className="w-full bg-orange-500 text-white px-4 py-2 rounded mt-4"
           >
-            Submit
+            Generate Diet Plan
           </button>
         </form>
+
+        {/* Display Diet Plan if available */}
+        {dietPlan && (
+          <div className="mt-8 p-6 bg-white rounded-lg shadow-md max-w-xl mx-auto">
+            <h2 className="text-2xl font-bold mb-4">Your Personalized Diet Plan:</h2>
+            <pre className="text-left whitespace-pre-wrap">{dietPlan}</pre>
+          </div>
+        )}
       </div>
     </main>
   );
