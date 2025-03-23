@@ -1,74 +1,59 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from typing import List
+import openai
+import os
 from pydantic import BaseModel
-import uvicorn
-import logging
 
-# Configure logging
-logging.basicConfig(level=logging.DEBUG)
-
-# Initialize FastAPI app
 app = FastAPI()
-
-# In-memory database for storing generated recipes
-memory_db = {"recipes": {}}
-
-# Pydantic model for recipe validation
-class Recipe(BaseModel):
-    name: str
-    ingredients: List[str]
-    instructions: str
-
-# Pydantic model for receiving ingredient list
-class RecipeRequest(BaseModel):
-    ingredients: List[str]
-
-# Allow frontend to connect to the backend
-origins = ["http://localhost:3000"]  # Adjust to your frontend URL
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Root endpoint
-@app.get("/")
-def home():
-    return {"message": "AI Recipe Generator is running!"}
+openai.api_key = os.getenv("OpenAI_API_KEY")  # Ensure you set this in your environment
 
-# Endpoint to fetch all stored recipes
-@app.get("/recipes", response_model=List[Recipe])
-def get_recipes():
-    return list(memory_db["recipes"].values())
+class PatientData(BaseModel):
+    age: int
+    height: float
+    weight: float
+    gender: str
+    goals: str
+    medical_condition: str
+    dietary: str
 
-# Endpoint to generate a recipe
-@app.post("/recipe", response_model=Recipe)
-def generate_recipe(request: RecipeRequest):
-    ingredients = request.ingredients  # Extract ingredients from the request
-
-    # Hardcoded response since AI model is not used
-    output = "Step 1: Mix ingredients. Step 2: Cook for 20 minutes."
-
-    # Create a Recipe instance using the Pydantic model
-    recipe = Recipe(
-        name="AI Generated Meal",
-        ingredients=ingredients,
-        instructions=output
-    )
-
-    # Store the recipe in the in-memory database
-    memory_db["recipes"][recipe.name] = recipe
-
-    # Log the generated recipe for debugging
-    logging.debug(f"Generated recipe: {recipe}")
-
-    # Return the recipe (automatically serialized to JSON by FastAPI)
-    return recipe
-
-# Run the FastAPI app
-if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8001)
+@app.post("/generate/")
+async def generate(patient_data: PatientData):
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",  # Ensure correct model name
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a nutritionist generating diet plans. "
+                        "Generate a personalized plan that is detailed and structured. "
+                        "Keep it in bullet points."
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": f"""
+                    Age: {patient_data.age}  
+                    Height: {patient_data.height} inches  
+                    Weight: {patient_data.weight} pounds  
+                    Gender: {patient_data.gender}  
+                    Goals: {patient_data.goals}  
+                    Medical Condition: {patient_data.medical_condition}  
+                    Dietary Preferences: {patient_data.dietary}
+                    """,
+                },
+            ],
+        )
+        diet_plan = response["choices"][0]["message"]["content"]
+        return {"diet_plan": diet_plan}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
