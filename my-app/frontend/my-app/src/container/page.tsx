@@ -87,7 +87,7 @@ export default function Page() {
     <main className="min-h-screen bg-gradient-to-b from-orange-50 to-orange-100">
       <div className="bg-orange-500 h-auto w-full fixed top-0 z-50">
         <h1 className="text-6xl font-extrabold text-gray-900 tracking-wide uppercase mx-auto text-center">
-          title
+          ai food chatbox
         </h1>
       </div>
 
@@ -110,16 +110,7 @@ export default function Page() {
             </div>
           ))}
 
-          {/* Ingredients */}
-          <div className="mb-4 text-left">
-            <label className="block mb-1">Ingredients:</label>
-            <input
-              type="text"
-              value={ingredients}
-              onChange={(e) => setIngredients(e.target.value)}
-              className="w-full border px-3 py-2 rounded"
-            />
-          </div>
+          
 
           {/* Allergies */}
           <div className="mb-4 text-left">
