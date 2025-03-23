@@ -3,7 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 import openai
 import os
 from pydantic import BaseModel
+from dotenv import load_dotenv
+load_dotenv() 
 # force a pull req
+
+
 app = FastAPI()
 
 app.add_middleware(
@@ -13,9 +17,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-openai.api_key = os.getenv("OpenAI_API_KEY")  # Ensure you set this in your environment
-
+open_ai_key = os.environ.get("OpenAI_API_KEY")
+print("Open ai api", open_ai_key)
 class PatientData(BaseModel):
     age: int
     height: float

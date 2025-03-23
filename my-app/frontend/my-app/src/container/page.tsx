@@ -1,16 +1,17 @@
 "use client";
 import { useState } from "react";
 import "./page.css";
-import * as React from "react";
+import axios from "axios"; // Import axios for making HTTP requests
 
 // Static personal info
 const fieldsPersonalInfo = [
   { name: "age", label: "Age", type: "number" },
-  { name: "weight", label: "Weight (kg)", type: "number" },
-  { name: "height", label: "Height (cm)", type: "number" },
+  { name: "weight", label: "Weight (Ibs)", type: "number" },
+  { name: "height", label: "Height (Inches)", type: "number" },
+  { name: "gender", label: "Gender", type: "text" }, // Added gender field
 ];
 
-// Allergies list
+// Allergies list (optional, if needed for future use)
 const allergyOptions = ["Peanuts", "Dairy", "Gluten", "Seafood"];
 
 // Dynamic fields by category
@@ -42,6 +43,9 @@ export default function Page() {
   const [ingredients, setIngredients] = useState("");
   const [allergies, setAllergies] = useState<string[]>([]);
 
+  // Tracks diet plan response
+  const [dietPlan, setDietPlan] = useState("");
+
   // Add new field group (goal, medical, dietary)
   const handleAddFields = (key: keyof typeof fieldsInsight) => {
     const newFields = fieldsInsight[key].filter(
@@ -64,7 +68,7 @@ export default function Page() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Allergy checkbox handler
+  // Allergy checkbox handler (optional, can be used for future customization)
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value, checked } = e.target;
     setAllergies((prev) =>
@@ -72,22 +76,33 @@ export default function Page() {
     );
   };
 
-  // Form submit handler
-  const handleSubmit = (e: React.FormEvent) => {
+  // Form submit handler (sends data to backend)
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Prepare the data to send to the backend
     const submission = {
       ...formData,
       ingredients,
       allergies,
     };
-    console.log("Submitted:", submission);
+
+    try {
+      // Make a POST request to the FastAPI backend
+      const response = await axios.post("http://127.0.0.1:8000/generate/", submission);
+      // Set the diet plan received from the backend
+      setDietPlan(response.data.diet_plan);
+    } catch (error) {
+      console.error("Error submitting the form:", error);
+      setDietPlan("Failed to generate diet plan.");
+    }
   };
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-orange-50 to-orange-100">
       <div className="bg-orange-500 h-auto w-full fixed top-0 z-50">
         <h1 className="text-6xl font-extrabold text-gray-900 tracking-wide uppercase mx-auto text-center">
-          title
+          Personalized Diet Plan Generator
         </h1>
       </div>
 
@@ -184,6 +199,14 @@ export default function Page() {
             Submit
           </button>
         </form>
+
+        {/* Display the Diet Plan Result */}
+        {dietPlan && (
+          <div className="mt-8 text-center bg-white p-4 rounded shadow-md">
+            <h3 className="text-xl font-semibold mb-4">Your Personalized Diet Plan</h3>
+            <p>{dietPlan}</p>
+          </div>
+        )}
       </div>
     </main>
   );
