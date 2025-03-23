@@ -6,8 +6,8 @@ import * as React from "react";
 // Static personal info
 const fieldsPersonalInfo = [
   { name: "age", label: "Age", type: "number" },
-  { name: "weight", label: "Weight (Lbs)", type: "number" },
-  { name: "height", label: "Height (inches)", type: "number" },
+  { name: "weight", label: "Weight (kg)", type: "number" },
+  { name: "height", label: "Height (cm)", type: "number" },
 ];
 
 // Allergies list
@@ -157,21 +157,21 @@ export default function Page() {
             <button
               type="button"
               onClick={() => handleAddFields("goal")}
-              className="bg-[#ffbf69]  text-white px-4 py-2 rounded"
+              className="bg-green-500 text-white px-4 py-2 rounded"
             >
               Add Goal
             </button>
             <button
               type="button"
               onClick={() => handleAddFields("medical")}
-              className="bg-[#ffbf69] text-white px-4 py-2 rounded"
+              className="bg-blue-500 text-white px-4 py-2 rounded"
             >
               Add Medical Condition
             </button>
             <button
               type="button"
               onClick={() => handleAddFields("dietary")}
-              className="bg-[#ffbf69]  text-white px-4 py-2 rounded"
+              className="bg-pink-500 text-white px-4 py-2 rounded"
             >
               Add Dietary Preference
             </button>
